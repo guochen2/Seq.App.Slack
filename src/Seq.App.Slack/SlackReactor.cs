@@ -73,6 +73,13 @@ namespace Seq.App.Slack
             HelpText = "Comma separated list of properties to include as attachments.  The default is to include all properties.")]
         public string IncludedProperties { get; set; }
 
+
+        [SeqAppSetting(
+            DisplayName = "SeqUrl properties",
+            IsOptional = true,
+            HelpText = "The seqURL value of the pushed data overrides the default listenUris")]
+        public string SeqUrl { get; set; }
+
         private EventTypeSuppressions _suppressions;
         private static readonly IImmutableList<string> SpecialProperties = ImmutableList.Create("Id", "Host");
         private ISlackApi _slackApi;
@@ -120,7 +127,7 @@ namespace Seq.App.Slack
                 var results = new SlackMessageAttachment(color, resultsText);
                 message.Attachments.Add(results);
 
-                if(MessageTemplate != null)
+                if (MessageTemplate != null)
                 {
                     message.Attachments.Add(new SlackMessageAttachment(color, MessageTemplate, null, true));
                 }
@@ -138,7 +145,7 @@ namespace Seq.App.Slack
                 if (evt.Data.Properties == null || !evt.Data.Properties.ContainsKey(key)) continue;
 
                 var property = evt.Data.Properties[key];
-                special.Fields.Add(new SlackMessageAttachmentField(key, property.ToString(), @short: true ));
+                special.Fields.Add(new SlackMessageAttachmentField(key, property.ToString(), @short: true));
             }
 
             if (evt.Data.Exception != null)
@@ -162,7 +169,7 @@ namespace Seq.App.Slack
                     if (includedPropertiesArray.Any() && !includedPropertiesArray.Contains(property.Key)) continue;
 
                     string value = ConvertPropertyValueToString(property.Value);
-                    
+
                     otherProperties.Fields.Add(new SlackMessageAttachmentField(property.Key, value, @short: false));
                 }
             }
@@ -203,7 +210,7 @@ namespace Seq.App.Slack
 
         private string GenerateMessageText(Event<LogEventData> evt)
         {
-            var seqUrl = Host.ListenUris.FirstOrDefault();
+            var seqUrl = string.IsNullOrWhiteSpace(SeqUrl) ? Host.ListenUris.FirstOrDefault() : SeqUrl;
 
             if (IsAlert(evt))
             {
